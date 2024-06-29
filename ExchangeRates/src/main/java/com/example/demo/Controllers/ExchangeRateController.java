@@ -27,7 +27,7 @@ public class ExchangeRateController {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    public float getValueByCharCodeFromDocument(String charCode, Document document) throws IOException {
+    public float getValueByCharCodeFromDocument(String charCode, Document document) throws IOException { //todo можно конечно и так парсить, но я бы предпочел jackson(XmlMapper)
         String valuteId = GetXmlData.defaultCharCodeAndValuteIdDictionary.get(charCode);
         try {
             return Float.parseFloat(document.select("Valute#" + valuteId).get(0).select("Value").get(0).text().replace(",", "."));
@@ -39,7 +39,7 @@ public class ExchangeRateController {
     }
 
     @PostMapping()
-    @Scheduled(fixedRate = 86400000)
+    @Scheduled(fixedRate = 86400000) //todo лучше использовать cron
     public void job() throws IOException {
         LocalDate date = LocalDate.now();
         Document document = GetXmlData.getCurDateXML(formatter.format(date));
@@ -53,15 +53,16 @@ public class ExchangeRateController {
     }
 
     @GetMapping()
-    public String GetExchangeRates(@RequestParam String code, @RequestParam String string_date) throws IOException {
-        DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    public String GetExchangeRates(@RequestParam String code, @RequestParam String string_date) throws IOException { //todo на двух параметрах еще можно использовать @RequestParam, но мне больше нравится DTO
+        
+        DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");// todo не нужно так парсить дату, можно сделать @RequestParam @DateTimeFormat(pattern="yyyy-MM-dd") Date date
         LocalDate date = LocalDate.parse(string_date, formatter1);
         try {
             ExchangeRate exchangeRate = exchangeRateService.listExchangeRates(code, date).get(0);
             Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(ExchangeRate.class, new ExchangeRateTypeAdapter()).registerTypeAdapter(LocalDate.class, new LocalDateTypeAdapter()).create();
             System.out.println(gson.toJson(exchangeRate));
-            return gson.toJson(exchangeRate);
-        } catch (IndexOutOfBoundsException e) {
+            return gson.toJson(exchangeRate);//todo не обязательно самому перегонять объект, спринг сам умеет в сериализацию/десериализацию
+        } catch (IndexOutOfBoundsException e) { //todo не стоит завязываться на такой exception, либо делать у метода getExchangeRate свой exception, если в БД нет данных. Либо проверять на null/optional
             Document document = GetXmlData.getCurDateXML(date);
             if (document == null) {
                 throw new NullPointerException();

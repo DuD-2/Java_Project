@@ -11,7 +11,7 @@ public class ExchangeRateTypeAdapter implements JsonSerializer<ExchangeRate> {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     @Override
     public JsonObject serialize(ExchangeRate exchangeRate, Type type, JsonSerializationContext jsonSerializationContext) {
-        JsonObject result = new JsonObject();
+        JsonObject result = new JsonObject();// не нужно парсить самому классы простые, спец настройки не требуются, можно не переопределять сериализатор/десериализаторы
 
         result.addProperty("CharCode", exchangeRate.getCharCode());
         result.addProperty("Date", exchangeRate.getDate().toString());
